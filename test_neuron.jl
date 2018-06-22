@@ -3,7 +3,7 @@ using Plots
 
 testParams = HHparams(120, 36, 0.3, 50, -77, -54.4, -65, 1)
 testIzhiParams = IzhiParams(0.2,0.02,-65,2)
-num_neurons = 500
+num_neurons = 50
 testNeurons = HHneurons(num_neurons, testParams)
 testIzhis = IzhiNeurons(num_neurons, testIzhiParams)
 t_total = 200
@@ -23,7 +23,7 @@ spikesIzhi = zeros(steps_total,num_neurons)
 for i in 1:steps_total
     vMem[i,:], spikeInds = update!(testNeurons, curr[i,:], dt)
     spikes[i, spikeInds] = 1
-    
+
     vMemIzhi[i,:], spikeIndsIzhi = update!(testIzhis, curr[i,:], dt)
     spikesIzhi[i,spikeIndsIzhi] = 1
 end

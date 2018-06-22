@@ -1,6 +1,6 @@
 module neuron
 
-export HHparams, HHneurons, IzhiParams, IzhiNeurons, update!
+export HHparams, HHneurons, IzhiParams, IzhiNeurons, MNparams, MNneurons, update!
 
 abstract type Neurons end
 abstract type NeuronParams end
@@ -95,6 +95,57 @@ function update!(neurons::IzhiNeurons, input, dt)
     neurons.u[spikeInd] += neurons.params.d - uNext[spikeInd]
 
     return neurons.v, spikeInd
+end
+
+type MNparams <: NeuronParams
+    # Current params
+    k::Array{Float64,1}
+    # Voltage params
+    C::Float64
+    G::Float64
+    El::Float64
+    # Threshold params
+    θinf::Float64
+    a::Float64
+    b::Float64
+    # Spike update rule params
+    R::Array{Float64,1}
+    A::Array{Float64,1}
+    Vr::Float64
+    θr::Float64
+
+    MNparams(El, θinf, k, C, G, a, b, R, A, Vr, θr) = new(k,C,G,El,θinf,a,b,R,A,Vr,θr)
+end
+
+type MNneurons <: Neurons
+    num_neur::Int64         # Number of Neurons in population
+    params::MNparams        # Neuron parameters
+    V::Array{Float64,1}     # Variables
+    θ::Array{Float64,1}
+    Iint::Array{Float64,2}
+    lastSpike::Array{Float64,1}
+    MNneurons(num_neur, params) = new(num_neur, params, params.El*ones(num_neur), params.θinf*ones(num_neur), zeros(num_neur,length(params.R)),  zeros(num_neur))
+end
+
+function update!(neurons::MNneurons, input, dt)
+    # Calculate state variable updates
+    neurons.θ += dt * (neurons.params.a * (neurons.V - neurons.params.El) - neurons.params.b * (neurons.θ - neurons.params.θinf))
+    neurons.V += dt * (input + vec(sum(neurons.Iint,2)) - neurons.params.G * (neurons.V - neurons.params.El))./neurons.params.C
+    neurons.Iint .-= dt * (neurons.params.k' .* neurons.Iint)
+
+    # Find where spikes occur
+    isspike(v) = (v .>= neurons.θ)
+    spikeInd = find(isspike(neurons.V))
+    neurons.lastSpike += dt
+    neurons.lastSpike[spikeInd] = 0.
+
+    # Spike update rules
+    # TODO: NOT sure if this works (particularly I)
+    neurons.V[spikeInd] = neurons.params.Vr
+    neurons.Iint[spikeInd,:] = neurons.params.R' .* neurons.Iint[spikeInd,:] .+ neurons.params.A'
+    neurons.θ[spikeInd] = max.(neurons.θ, neurons.params.θr)[spikeInd]
+
+    return neurons.V, neurons.θ, spikeInd
 end
 
 end
