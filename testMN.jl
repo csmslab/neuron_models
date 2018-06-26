@@ -3,7 +3,7 @@ using Plots
 
 num_neurons = 10
 t_total = 10
-dt = 0.001
+dt = 0.0001
 steps_total = convert(Int64,t_total/dt)
 curr = zeros(steps_total,num_neurons)
 El = -0.07
@@ -20,22 +20,25 @@ Vr = -0.07
 testParams = MNparams(El, θinf, k, C, G, a, b, R, A, Vr, θr)
 testNeurons = MNneurons(num_neurons, testParams)
 
-
+currStart = convert(Int64, 2/dt)
+currStop = convert(Int64, 6/dt)
 for i in 1:num_neurons
-    curr[convert(Int64,2/dt):convert(Int64,(6/dt)),i] = 1 + i*5e-6;
+    curr[currStart:currStop, i] = 1 + i*5e-6;
 end
 
 V = zeros(steps_total, num_neurons)
 θ = zeros(steps_total, num_neurons)
-spikes = zeros(steps_total, num_neurons)
+spikes = spzeros(steps_total, num_neurons)
 
 for i in 1:steps_total
     V[i,:], θ[i,:], spikeInds = update!(testNeurons, curr[i,:], dt)
-    spikes[i, spikeInds] = 1
+    if ~isempty(spikeInds) && i != 1
+        spikes[i, spikeInds] = V[i-1,spikeInds]
+    end
 end
 
-#TODO fix the scattering thing
+spikeTimes, _, spikeVals = findnz(spikes)
 plot(V)
 plot!(θ)
-scatter!(spikes[2:end,:].*V[1:end-1,:])
-plot!(xlim=(2000,6000))
+scatter!(spikeTimes, spikeVals)
+plot!(xlim=(currStart, currStop))
