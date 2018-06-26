@@ -2,7 +2,7 @@ using neuron
 using Plots
 
 num_neurons = 10
-t_total = 10
+t_total = 1
 dt = 0.0001
 steps_total = convert(Int64,t_total/dt)
 curr = zeros(steps_total,num_neurons)
@@ -20,8 +20,8 @@ Vr = -0.07
 testParams = MNparams(El, θinf, k, C, G, a, b, R, A, Vr, θr)
 testNeurons = MNneurons(num_neurons, testParams)
 
-currStart = convert(Int64, 2/dt)
-currStop = convert(Int64, 6/dt)
+currStart = round(Int64, 0.02/dt)
+currStop = round(Int64, 0.5/dt)
 for i in 1:num_neurons
     curr[currStart:currStop, i] = 1 + i*5e-6;
 end
@@ -37,8 +37,8 @@ for i in 1:steps_total
     end
 end
 
-spikeTimes, _, spikeVals = findnz(spikes)
+spikeTimes, spikeNeurs, spikeVals = findnz(spikes)
 plot(V)
 plot!(θ)
 scatter!(spikeTimes, spikeVals)
-plot!(xlim=(currStart, currStop))
+#plot!(xlim=(currStart, currStop))
