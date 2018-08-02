@@ -3,7 +3,7 @@ using Plots
 
 num_neurons = 10
 t_total = 10
-dt = 0.0001
+dt = 0.001
 steps_total = convert(Int64,t_total/dt)
 curr = zeros(steps_total,num_neurons)
 El = -0.07
@@ -36,9 +36,10 @@ for i in 1:steps_total
         spikes[i, spikeInds] = V[i-1,spikeInds]
     end
 end
-
+'''
 spikeTimes, _, spikeVals = findnz(spikes)
 plot(V)
 plot!(θ)
 scatter!(spikeTimes, spikeVals)
 plot!(xlim=(currStart, currStop))
+'''

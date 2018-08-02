@@ -148,4 +148,59 @@ function update!(neurons::MNneurons, input, dt)
     return neurons.V, neurons.θ, spikeInd
 end
 
+type MNBCparams <: NeuronParams
+    # Membrane capacitances
+    Cm::Float64
+    Ct::Float64
+    # Spike update rule params
+    Vr::Float64
+    θr::Float64
+    # Switch-cap parameters
+    Csm::Float64
+    Cst::Float64
+
+    # Leakage capacitance
+    Cl::Float64
+    # Leakage clock frequency (Phi1, Phi2 on chip)
+    flm::Float64
+    flt::Float64
+    # Leakage conductances - calculated from Cl and Fl(m,t)
+    glm::FLoat64
+    glt::Float64
+
+
+    MNBCparams() = new(glm,glt,Cm,Ct,Cl,Vr,θr,Csm,Cst)
+end
+
+type MNBCneurons <: Neurons
+    num_neur::Int64         # Number of Neurons in population
+    params::MNparams        # Neuron parameters
+    V::Array{Float64,1}     # Variables
+    θ::Array{Float64,1}
+    Iint::Array{Float64,2}
+    lastSpike::Array{Float64,1}
+    MNneurons(num_neur, params) = new(num_neur, params, params.El*ones(num_neur), params.θinf*ones(num_neur), zeros(num_neur,length(params.R)),  zeros(num_neur))
+end
+
+function update!(neurons::MNBCneurons, input, dt)
+    # Calculate state variable updates
+    neurons.θ += dt * (neurons.params.a * (neurons.V - neurons.params.El) - neurons.params.b * (neurons.θ - neurons.params.θinf))
+    neurons.V += dt * (input + vec(sum(neurons.Iint,2)) - neurons.params.G * (neurons.V - neurons.params.El))./neurons.params.C
+    neurons.Iint .-= dt * (neurons.params.k' .* neurons.Iint)
+
+    # Find where spikes occur
+    isspike(v) = (v .>= neurons.θ)
+    spikeInd = find(isspike(neurons.V))
+    neurons.lastSpike += dt
+    neurons.lastSpike[spikeInd] = 0.
+
+    # Spike update rules
+    # TODO: NOT sure if this works (particularly I)
+    neurons.V[spikeInd] = neurons.params.Vr
+    neurons.Iint[spikeInd,:] = neurons.params.R' .* neurons.Iint[spikeInd,:] .+ neurons.params.A'
+    neurons.θ[spikeInd] = max.(neurons.θ, neurons.params.θr)[spikeInd]
+
+    return neurons.V, neurons.θ, spikeInd
+end
+
 end
