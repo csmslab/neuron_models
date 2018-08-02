@@ -124,7 +124,7 @@ type MNneurons <: Neurons
     θ::Array{Float64,1}
     Iint::Array{Float64,2}
     lastSpike::Array{Float64,1}
-    MNneurons(num_neur, params) = new(num_neur, params, params.El*ones(num_neur), params.θinf*ones(num_neur), zeros(num_neur,length(params.R)),  zeros(num_neur))
+    MNneurons(num_neur, params) = new(num_neur, params, params.El*ones(num_neur), params.θinf*ones(num_neur), zeros(num_neur, length(params.R)),  zeros(num_neur))
 end
 
 function update!(neurons::MNneurons, input, dt)

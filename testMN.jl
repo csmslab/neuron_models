@@ -20,8 +20,8 @@ Vr = -0.07
 testParams = MNparams(El, θinf, k, C, G, a, b, R, A, Vr, θr)
 testNeurons = MNneurons(num_neurons, testParams)
 
-currStart = convert(Int64, 2/dt)
-currStop = convert(Int64, 6/dt)
+currStart = round(Int64, 0.02/dt)
+currStop = round(Int64, 0.5/dt)
 for i in 1:num_neurons
     curr[currStart:currStop, i] = 1 + i*5e-6;
 end
@@ -36,10 +36,9 @@ for i in 1:steps_total
         spikes[i, spikeInds] = V[i-1,spikeInds]
     end
 end
-'''
-spikeTimes, _, spikeVals = findnz(spikes)
+
+spikeTimes, spikeNeurs, spikeVals = findnz(spikes)
 plot(V)
 plot!(θ)
 scatter!(spikeTimes, spikeVals)
-plot!(xlim=(currStart, currStop))
-'''
+#plot!(xlim=(currStart, currStop))
